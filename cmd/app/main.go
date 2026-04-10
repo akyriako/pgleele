@@ -89,8 +89,8 @@ func main() {
 	}
 	defer pool.Close()
 
-	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+	pingCtx, pingCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer pingCancel()
 	if err := pool.Ping(pingCtx); err != nil {
 		klog.Error(fmt.Sprintf("pinging postgres failed: %v", err))
 		os.Exit(1)
@@ -99,9 +99,8 @@ func main() {
 	identity := fmt.Sprintf("%s/%s/%s", cfg.ClusterName, cfg.Namespace, cfg.PodName)
 	lock := pglock.New(pool, cfg.ElectionNamespace, cfg.ElectionName, identity)
 
-	lockCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
+	lockCtx, lockCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer lockCancel()
 	err = lock.CreateBootstrapElectionRecord(lockCtx, int(cfg.LeaseDuration.Seconds()))
 	if err != nil {
 		klog.Error(fmt.Sprintf("creating bootstrap lock failed: %v", err))
